@@ -1,0 +1,2479 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STCET - Automatic Mail Sender</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-color: #030712;
+            --card-bg: rgba(17, 24, 39, 0.45);
+            --card-border: rgba(255, 255, 255, 0.05);
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.3);
+            --secondary: #3b82f6;
+            --secondary-glow: rgba(59, 130, 246, 0.3);
+            --accent-gradient: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.2);
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #0ea5e9;
+
+            --font-display: 'Plus Jakarta Sans', sans-serif;
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* --- LIGHT THEME OVERRIDES --- */
+        body.light-mode {
+            --bg-color: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(15, 23, 42, 0.08);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --primary-glow: rgba(139, 92, 246, 0.12);
+            --secondary-glow: rgba(59, 130, 246, 0.12);
+        }
+
+        body.light-mode aside.sidebar {
+            background: rgba(241, 245, 249, 0.85);
+            border-right: 1px solid rgba(15, 23, 42, 0.08);
+        }
+
+        body.light-mode header.top-header {
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        body.light-mode input[type="text"],
+        body.light-mode textarea {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            color: #0f172a;
+        }
+
+        body.light-mode input[type="text"]:focus,
+        body.light-mode textarea:focus {
+            background: #ffffff;
+            border-color: var(--primary);
+        }
+
+        body.light-mode .preview-box {
+            background: #ffffff;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.03);
+        }
+
+        body.light-mode .preview-header {
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+        }
+
+        body.light-mode .name-item:hover {
+            background: rgba(15, 23, 42, 0.02);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 40%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.12) 0px, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            line-height: 1.5;
+            overflow-x: hidden;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* --- SIDEBAR STYLE --- */
+        aside.sidebar {
+            background: rgba(10, 15, 30, 0.75);
+            border-right: 1px solid var(--card-border);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            padding: 1.75rem;
+            z-index: 100;
+        }
+
+        @media (max-width: 1024px) {
+            aside.sidebar {
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--card-border);
+            }
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo-icon {
+            background: var(--accent-gradient);
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            color: white;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .sidebar-brand h1 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.025em;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem 0.5rem;
+            font-weight: 700;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            flex: 1;
+        }
+
+        .sidebar-item a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.7rem 0.85rem;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .sidebar-item a:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .sidebar-item.active a {
+            color: var(--text-primary);
+            background: rgba(139, 92, 246, 0.12);
+            border-color: rgba(139, 92, 246, 0.2);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.03);
+        }
+
+        .sidebar-item.active a i {
+            color: var(--primary);
+        }
+
+        .sidebar-link-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .pulse-badge {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--card-border);
+            padding-top: 1.25rem;
+            margin-top: auto;
+        }
+
+        .smtp-status-widget {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 0.6rem 0.85rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--card-border);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-dot.pending {
+            background-color: var(--warning);
+            box-shadow: 0 0 8px var(--warning);
+        }
+
+        /* --- CONTENT CONTAINER --- */
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header.top-header {
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid var(--card-border);
+            background: rgba(8, 12, 20, 0.2);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            header.top-header {
+                padding: 1.5rem;
+            }
+        }
+
+        .header-title-container h2 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .header-title-container p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.15rem;
+        }
+
+        main.main-content {
+            flex: 1;
+            padding: 2rem 3rem;
+            width: 100%;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            main.main-content {
+                padding: 1.5rem;
+            }
+        }
+
+        /* --- VIEWS STYLING --- */
+        .view-container {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+
+        .view-container.active {
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- DASHBOARD VIEW --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            backdrop-filter: blur(16px);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(139, 92, 246, 0.25);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.05);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--accent-gradient);
+            opacity: 0.7;
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+
+        .stat-card-header i {
+            color: var(--primary);
+        }
+
+        .stat-card-value {
+            font-family: var(--font-display);
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0.15rem 0;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+        }
+
+        .stat-card-unit {
+            font-size: 0.85rem;
+            font-weight: 300;
+            color: var(--text-secondary);
+            margin-top: 0.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-card-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .dashboard-banner {
+            background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.03) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.12);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            backdrop-filter: blur(16px);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-banner {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .banner-content {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .banner-icon {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 0.65rem;
+            border-radius: var(--radius-md);
+            color: var(--primary);
+        }
+
+        .banner-text h3 {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.15rem;
+        }
+
+        .banner-text p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* --- CARDS & GENERAL UI --- */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            border-color: rgba(139, 92, 246, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 0.75rem;
+        }
+
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title i {
+            color: var(--primary);
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.2rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .alert-banner {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: var(--radius-md);
+            padding: 0.85rem 1rem;
+            font-size: 0.85rem;
+            color: #fca5a5;
+            display: none;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        /* --- FORMS & INPUTS --- */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        input[type="text"],
+        textarea {
+            background: rgba(10, 15, 26, 0.7);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            padding: 0.65rem 0.85rem;
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+            background: rgba(10, 15, 26, 0.9);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+            line-height: 1.5;
+        }
+
+        /* --- BUTTONS --- */
+        button {
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            border: none;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: white;
+            padding: 0.65rem 1.25rem;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+            padding: 0.65rem 1.25rem;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-danger-icon {
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            padding: 0.2rem;
+            border-radius: 4px;
+        }
+
+        .btn-danger-icon:hover:not(:disabled) {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* --- TWO COLUMNS LAYOUT --- */
+        .dept-two-col {
+            display: grid;
+            grid-template-columns: 1fr 1.3fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .dept-two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .names-list-container {
+            border: 1px solid var(--card-border);
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: var(--radius-sm);
+            height: 330px;
+            overflow-y: auto;
+        }
+
+        .names-list {
+            list-style: none;
+        }
+
+        .name-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.65rem 0.85rem;
+            border-bottom: 1px solid var(--card-border);
+            transition: var(--transition);
+        }
+
+        .name-item:last-child {
+            border-bottom: none;
+        }
+
+        .name-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .name-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+
+        .name-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .name-email {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state {
+            padding: 3rem 1.5rem;
+            text-align: center;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .empty-state i {
+            font-size: 1.75rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state p.main-msg {
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .empty-state p.sub-msg {
+            font-size: 0.75rem;
+        }
+
+        .tooltip-info {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: rgba(59, 130, 246, 0.08);
+            border-left: 3px solid var(--secondary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* --- EMAIL CLIENT PREVIEW --- */
+        .preview-box {
+            background: rgba(10, 15, 26, 0.85);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .preview-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .preview-header-line {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .preview-label-tag {
+            color: var(--text-muted);
+            min-width: 55px;
+            font-weight: 600;
+        }
+
+        .preview-value-text {
+            color: var(--text-secondary);
+        }
+
+        .preview-body-content {
+            white-space: pre-wrap;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 0.25rem;
+        }
+
+        /* --- BROADCAST CONTROLLER (BOTTOM CARD) --- */
+        .broadcast-card {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .btn-broadcast-main {
+            width: 100%;
+            padding: 0.85rem;
+            font-size: 1rem;
+            background: var(--accent-gradient);
+            color: white;
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 18px var(--primary-glow);
+            transition: var(--transition);
+            font-weight: 700;
+        }
+
+        .btn-broadcast-main:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5);
+        }
+
+        .progress-bar-outer {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 9999px;
+            height: 8px;
+            overflow: hidden;
+            width: 100%;
+            border: 1px solid var(--card-border);
+            display: none;
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            width: 0%;
+            background: var(--accent-gradient);
+            transition: width 0.3s ease;
+        }
+
+        /* --- CONSOLE LOGS --- */
+        .terminal-container {
+            background: #020408;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            font-family: var(--font-mono);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .terminal-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding-bottom: 0.4rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .terminal-window-dots {
+            display: flex;
+            gap: 0.35rem;
+        }
+
+        .terminal-dot-light {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot-close { background: #ef4444; }
+        .dot-minimize { background: #f59e0b; }
+        .dot-maximize { background: #10b981; }
+
+        .terminal-console-body {
+            height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .console-line {
+            font-size: 0.75rem;
+            word-break: break-all;
+            display: flex;
+            gap: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .line-timestamp {
+            color: var(--text-muted);
+            min-width: 65px;
+        }
+
+        .line-text {
+            color: var(--text-primary);
+        }
+
+        .line-info { color: var(--info); }
+        .line-success { color: var(--success); }
+        .line-warning { color: var(--warning); }
+        .line-danger { color: var(--danger); }
+
+        /* --- SETTINGS VIEW --- */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .config-table th, 
+        .config-table td {
+            text-align: left;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .config-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .config-table td.config-value {
+            font-family: var(--font-mono);
+            color: var(--text-primary);
+        }
+
+        .diagnostic-terminal {
+            background: #020408;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            min-height: 120px;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--card-border);
+            background: rgba(8, 12, 20, 0.1);
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* --- MODAL STYLING --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(3, 7, 18, 0.65);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        .modal-card {
+            background: rgba(17, 24, 39, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 580px;
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            animation: modalZoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        body.light-mode .modal-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(15, 23, 42, 0.08);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 0.75rem;
+        }
+
+        .modal-header h3 {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            border-top: 1px solid var(--card-border);
+            padding-top: 1rem;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes modalZoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDE NAVIGATION -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i data-lucide="send" class="sidebar-logo-icon"></i>
+            <h1>STCET Mailer</h1>
+        </div>
+
+        <nav class="sidebar-menu">
+            <span class="sidebar-section-title">Navigation</span>
+            <li class="sidebar-item active" id="nav-dashboard">
+                <a href="javascript:void(0)" onclick="switchPage('dashboard')">
+                    <div class="sidebar-link-content">
+                        <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
+                        <span>Dashboard</span>
+                    </div>
+                </a>
+            </li>
+            <li class="sidebar-item" id="nav-custom-mail">
+                <a href="javascript:void(0)" onclick="switchPage('custom-mail')">
+                    <div class="sidebar-link-content">
+                        <i data-lucide="mail-plus" style="width: 18px; height: 18px;"></i>
+                        <span>Custom Mail</span>
+                    </div>
+                </a>
+            </li>
+
+            <span class="sidebar-section-title">Departments</span>
+            <li class="sidebar-item" id="nav-dept-ai23">
+                <a href="javascript:void(0)" onclick="switchPage('department', 'ai23')">
+                    <div class="sidebar-link-content">
+                        <i data-lucide="brain" style="width: 18px; height: 18px;"></i>
+                        <span>AI (ai23)</span>
+                    </div>
+                    <span class="pulse-badge" id="badge-ai23" style="display: none;"></span>
+                </a>
+            </li>
+            <li class="sidebar-item" id="nav-dept-cse23">
+                <a href="javascript:void(0)" onclick="switchPage('department', 'cse23')">
+                    <div class="sidebar-link-content">
+                        <i data-lucide="code" style="width: 18px; height: 18px;"></i>
+                        <span>CSE23</span>
+                    </div>
+                    <span class="pulse-badge" id="badge-cse23" style="display: none;"></span>
+                </a>
+            </li>
+            <li class="sidebar-item" id="nav-dept-it23">
+                <a href="javascript:void(0)" onclick="switchPage('department', 'it23')">
+                    <div class="sidebar-link-content">
+                        <i data-lucide="terminal" style="width: 18px; height: 18px;"></i>
+                        <span>IT23</span>
+                    </div>
+                    <span class="pulse-badge" id="badge-it23" style="display: none;"></span>
+                </a>
+            </li>
+            <li class="sidebar-item" id="nav-dept-ece23">
+                <a href="javascript:void(0)" onclick="switchPage('department', 'ece23')">
+                    <div class="sidebar-link-content">
+                        <i data-lucide="cpu" style="width: 18px; height: 18px;"></i>
+                        <span>ECE23</span>
+                    </div>
+                    <span class="pulse-badge" id="badge-ece23" style="display: none;"></span>
+                </a>
+            </li>
+            <li class="sidebar-item" id="nav-dept-ee23">
+                <a href="javascript:void(0)" onclick="switchPage('department', 'ee23')">
+                    <div class="sidebar-link-content">
+                        <i data-lucide="zap" style="width: 18px; height: 18px;"></i>
+                        <span>EE23</span>
+                    </div>
+                    <span class="pulse-badge" id="badge-ee23" style="display: none;"></span>
+                </a>
+            </li>
+
+            <span class="sidebar-section-title">System</span>
+            <li class="sidebar-item" id="nav-settings">
+                <a href="javascript:void(0)" onclick="switchPage('settings')">
+                    <div class="sidebar-link-content">
+                        <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
+                        <span>Settings</span>
+                    </div>
+                </a>
+            </li>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="smtp-status-widget">
+                <span class="status-dot pending" id="smtp-status-dot"></span>
+                <span id="smtp-status-text">SMTP Checking...</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN BODY -->
+    <div class="content-container">
+        <header class="top-header">
+            <div class="header-title-container">
+                <h2 id="top-title">Dashboard Overview</h2>
+                <p id="top-subtitle">Quick statistics and status checker across STCET departments</p>
+            </div>
+            <button class="btn-secondary" id="theme-toggle" title="Toggle Light/Dark Theme" style="padding: 0.5rem; border-radius: 50%; width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--card-border);">
+                <i data-lucide="sun" id="theme-icon" style="width: 18px; height: 18px;"></i>
+            </button>
+        </header>
+
+        <main class="main-content">
+            
+            <!-- VIEW: DASHBOARD -->
+            <div class="view-container active" id="dashboard-view">
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="switchPage('department', 'ai23')">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Artificial Intelligence</span>
+                            <i data-lucide="brain" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div class="stat-card-value" id="stat-ai23">-</div>
+                        <div class="stat-card-label">Prefix: ai23</div>
+                    </div>
+                    <div class="stat-card" onclick="switchPage('department', 'cse23')">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Computer Science</span>
+                            <i data-lucide="code" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div class="stat-card-value" id="stat-cse23">-</div>
+                        <div class="stat-card-label">Prefix: cse23</div>
+                    </div>
+                    <div class="stat-card" onclick="switchPage('department', 'it23')">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Information Tech</span>
+                            <i data-lucide="terminal" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div class="stat-card-value" id="stat-it23">-</div>
+                        <div class="stat-card-label">Prefix: it23</div>
+                    </div>
+                    <div class="stat-card" onclick="switchPage('department', 'ece23')">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Electronics & Comm</span>
+                            <i data-lucide="cpu" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div class="stat-card-value" id="stat-ece23">-</div>
+                        <div class="stat-card-label">Prefix: ece23</div>
+                    </div>
+                    <div class="stat-card" onclick="switchPage('department', 'ee23')">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Electrical Eng</span>
+                            <i data-lucide="zap" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div class="stat-card-value" id="stat-ee23">-</div>
+                        <div class="stat-card-label">Prefix: ee23</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-banner">
+                    <div class="banner-content">
+                        <div class="banner-icon">
+                            <i data-lucide="mail-check" style="width: 22px; height: 22px;"></i>
+                        </div>
+                        <div class="banner-text">
+                            <h3>Secure Email Broadcasting</h3>
+                            <p>All credentials are parsed locally from the environment file (.env). To check the SMTP connection health or setup requirements, click the settings link or run diagnostics.</p>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="switchPage('settings')">
+                        <span>Check SMTP settings</span>
+                        <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- VIEW: DYNAMIC DEPARTMENT BROADCAST -->
+            <div class="view-container" id="department-view">
+                <!-- Alert Banner: Broadcasting block -->
+                <div class="alert-banner" id="broadcast-warning-banner">
+                    <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
+                    <span id="broadcast-warning-text">A broadcast is currently running in another department. Please wait for it to finish.</span>
+                </div>
+
+                <div class="dept-two-col">
+                    <!-- Left: Recipients Card -->
+                    <div class="card" id="names-section">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i data-lucide="users"></i>
+                                Recipients List
+                            </h2>
+                            <span class="badge" id="names-count">0 Recipients</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="name-input">Add Recipient Name</label>
+                            <div class="input-row">
+                                <input type="text" id="name-input" placeholder="e.g. John Doe" autocomplete="off">
+                                <button class="btn-primary" id="add-name-btn" title="Add Recipient">
+                                    <i data-lucide="plus"></i>
+                                    <span>Add</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="tooltip-info">
+                            <i data-lucide="info" style="min-width: 14px; width: 14px;"></i>
+                            <span id="tooltip-email-format">Emails will format as: dept.firstname.lastname@stcet.ac.in</span>
+                        </div>
+
+                        <div class="names-list-container">
+                            <ul class="names-list" id="names-list">
+                                <!-- Dynamically Rendered -->
+                            </ul>
+                            <div class="empty-state" id="names-empty-state" style="display: none;">
+                                <i data-lucide="users"></i>
+                                <p class="main-msg">No recipients loaded</p>
+                                <p class="sub-msg">Add a recipient name above to start building the list.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Template Card & Preview -->
+                    <div class="card" id="message-section">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i data-lucide="edit-3"></i>
+                                Template Editor
+                            </h2>
+                            <button class="btn-secondary" id="save-template-btn" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;">
+                                <i data-lucide="save" style="width: 14px; height: 14px;"></i>
+                                <span>Save Draft</span>
+                            </button>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject-input">Email Subject</label>
+                            <input type="text" id="subject-input" placeholder="Enter subject line">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="body-input">Email Body</label>
+                            <textarea id="body-input" placeholder="Write email body..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Live Invitation Preview</label>
+                            <div class="preview-box">
+                                <div class="preview-header">
+                                    <div class="preview-header-line">
+                                        <span class="preview-label-tag">From:</span>
+                                        <span class="preview-value-text" id="preview-sender">stcet-mailer@stcet.ac.in</span>
+                                    </div>
+                                    <div class="preview-header-line">
+                                        <span class="preview-label-tag">To:</span>
+                                        <span class="preview-value-text" id="preview-recipient">recipient@stcet.ac.in</span>
+                                    </div>
+                                    <div class="preview-header-line">
+                                        <span class="preview-label-tag">Subject:</span>
+                                        <span class="preview-value-text" id="preview-subject" style="font-weight: 500;">(No Subject)</span>
+                                    </div>
+                                </div>
+                                <div class="preview-body-content" id="preview-body">(Empty Body)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom: Broadcast Controller -->
+                <div class="card broadcast-card">
+                    <div class="card-header" style="border-bottom: none; padding-bottom: 0;">
+                        <h2 class="card-title">
+                            <i data-lucide="rocket"></i>
+                            Broadcast Console
+                        </h2>
+                    </div>
+
+                    <button class="btn-broadcast-main" id="send-btn">
+                        <i data-lucide="play"></i>
+                        <span>Start Email Broadcast</span>
+                    </button>
+
+                    <div class="progress-bar-outer" id="progress-container">
+                        <div class="progress-bar-inner" id="progress-bar"></div>
+                    </div>
+
+                    <div class="terminal-container">
+                        <div class="terminal-top-bar">
+                            <div class="terminal-window-dots">
+                                <span class="terminal-dot-light dot-close"></span>
+                                <span class="terminal-dot-light dot-minimize"></span>
+                                <span class="terminal-dot-light dot-maximize"></span>
+                            </div>
+                            <span id="terminal-dept-title">LOGS - BROADCAST CONSOLE (AI)</span>
+                            <button class="btn-danger-icon" id="clear-logs-btn" title="Clear console" style="cursor: pointer;">
+                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        </div>
+                        <div class="terminal-console-body" id="terminal-body">
+                            <!-- Streamed logs -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: SYSTEM SETTINGS -->
+            <div class="view-container" id="settings-view">
+                <div class="settings-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i data-lucide="lock"></i>
+                                Local Environment Credentials
+                            </h2>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                            These configurations are retrieved from the <code>.env</code> file located at the workspace root directory. Do not expose this credentials file in version control.
+                        </p>
+                        
+                        <table class="config-table">
+                            <thead>
+                                <tr>
+                                    <th>Variable Name</th>
+                                    <th>Value Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>SENDER_EMAIL</td>
+                                    <td class="config-value" id="settings-email">Loading...</td>
+                                </tr>
+                                <tr>
+                                    <td>SENDER_PASSWORD</td>
+                                    <td class="config-value" id="settings-password">******** (Loaded securely)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="tooltip-info" style="margin-top: 0.5rem;">
+                            <i data-lucide="info" style="min-width: 14px; width: 14px;"></i>
+                            <span>Use Gmail App Passwords rather than your primary login password.</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i data-lucide="activity"></i>
+                                SMTP Health Diagnostics
+                            </h2>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                            Click below to execute a manual connection test directly from the Python server to the Gmail SMTP server (smtp.gmail.com:587) using the loaded credentials.
+                        </p>
+                        <button class="btn-secondary" id="test-smtp-btn" onclick="testSmtpConnection()">
+                            <i data-lucide="refresh-cw" style="width: 15px; height: 15px;"></i>
+                            <span>Run SMTP Diagnostic</span>
+                        </button>
+                        <div class="diagnostic-terminal" id="diagnostic-output">Diagnostic logs empty. Click 'Run SMTP Diagnostic' to test SMTP.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: CUSTOM MAIL -->
+            <div class="view-container" id="custom-mail-view">
+                <div class="dept-two-col">
+                    <!-- Left: Form Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i data-lucide="mail-plus"></i>
+                                Send to Custom Email
+                            </h2>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="custom-rec-email">Recipient Email Address</label>
+                            <input type="text" id="custom-rec-email" placeholder="e.g. user@example.com" autocomplete="off">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="custom-rec-name">Recipient Name (Optional)</label>
+                            <input type="text" id="custom-rec-name" placeholder="e.g. John Smith" autocomplete="off">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="custom-subject">Email Subject</label>
+                            <input type="text" id="custom-subject" placeholder="Enter subject line">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="custom-body">Email Body</label>
+                            <textarea id="custom-body" placeholder="Write email body... (Use {name} to substitute the name if provided)"></textarea>
+                        </div>
+
+                        <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem; cursor: pointer; margin-top: 0.25rem;">
+                            <input type="checkbox" id="custom-attach-img" checked style="width: auto; cursor: pointer;">
+                            <label for="custom-attach-img" style="cursor: pointer; text-transform: none; font-size: 0.85rem; font-weight: 500;">Attach default invitation image (img1.png)</label>
+                        </div>
+
+                        <button class="btn-broadcast-main" id="custom-send-btn" onclick="sendCustomEmail()">
+                            <i data-lucide="send"></i>
+                            <span>Send Custom Email</span>
+                        </button>
+                    </div>
+
+                    <!-- Right: Live Preview & Status -->
+                    <div class="card" style="justify-content: flex-start; gap: 1.5rem;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i data-lucide="eye"></i>
+                                Live Email Preview
+                            </h2>
+                        </div>
+                        
+                        <div class="preview-box">
+                            <div class="preview-header">
+                                <div class="preview-header-line">
+                                    <span class="preview-label-tag">From:</span>
+                                    <span class="preview-value-text" id="custom-preview-sender">stcet-mailer@stcet.ac.in</span>
+                                </div>
+                                <div class="preview-header-line">
+                                    <span class="preview-label-tag">To:</span>
+                                    <span class="preview-value-text" id="custom-preview-recipient">recipient@example.com</span>
+                                </div>
+                                <div class="preview-header-line">
+                                    <span class="preview-label-tag">Subject:</span>
+                                    <span class="preview-value-text" id="custom-preview-subject" style="font-weight: 500;">(No Subject)</span>
+                                </div>
+                            </div>
+                            <div class="preview-body-content" id="custom-preview-body">(Empty Body)</div>
+                        </div>
+
+                        <div class="terminal-container" style="flex: 1; display: flex; flex-direction: column;">
+                            <div class="terminal-top-bar">
+                                <div class="terminal-window-dots">
+                                    <span class="terminal-dot-light dot-close"></span>
+                                    <span class="terminal-dot-light dot-minimize"></span>
+                                    <span class="terminal-dot-light dot-maximize"></span>
+                                </div>
+                                <span>LOGS - CUSTOM MAIL CONSOLE</span>
+                                <button class="btn-danger-icon" id="clear-custom-logs-btn" title="Clear console" style="cursor: pointer;">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            </div>
+                            <div class="terminal-console-body" id="custom-terminal-body" style="height: 140px;">
+                                <div class="console-line line-info">
+                                    <span class="line-timestamp">[Ready]</span>
+                                    <span class="line-text">Custom mail console initialized.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer>
+            <p>© 2026 STCET Event Team. Securely designed using Python, SSE Streams, and Vanilla CSS Grid.</p>
+        </footer>
+    </div>
+
+    <!-- EMAIL PRE-FEED MODAL -->
+    <div id="email-confirm-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i data-lucide="mail-check" style="color: var(--primary); width: 20px; height: 20px;"></i> Confirm Generated Email</h3>
+                <button class="btn-danger-icon" onclick="closeConfirmModal()" style="padding: 0.25rem;">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">Review the generated email details below. You can customize them for this recipient before saving.</p>
+                
+                <div class="form-group">
+                    <label for="modal-rec-name">Recipient Name</label>
+                    <input type="text" id="modal-rec-name" placeholder="Name" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label for="modal-rec-email">Email Address</label>
+                    <input type="text" id="modal-rec-email" placeholder="Email Address" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-rec-subject">Custom Subject (Optional)</label>
+                    <input type="text" id="modal-rec-subject" placeholder="Leave empty to use template subject">
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-rec-body">Custom Body (Optional)</label>
+                    <textarea id="modal-rec-body" placeholder="Leave empty to use template body"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Live Individual Preview</label>
+                    <div class="preview-box" style="background: rgba(0, 0, 0, 0.25); box-shadow: none;">
+                        <div class="preview-header">
+                            <div class="preview-header-line">
+                                <span class="preview-label-tag">To:</span>
+                                <span class="preview-value-text" id="modal-preview-to">recipient@stcet.ac.in</span>
+                            </div>
+                            <div class="preview-header-line">
+                                <span class="preview-label-tag">Subject:</span>
+                                <span class="preview-value-text" id="modal-preview-subject" style="font-weight: 500;">(No Subject)</span>
+                            </div>
+                        </div>
+                        <div class="preview-body-content" id="modal-preview-body" style="max-height: 120px;">(Empty Body)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn-primary" id="modal-feed-btn" onclick="feedMail()">
+                    <i data-lucide="check-square"></i>
+                    <span>Feed the Mail</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP JAVASCRIPT -->
+    <script>
+        // App state
+        let currentPage = 'dashboard';
+        let selectedDept = 'ai23';
+        let isBroadcasting = false;
+        let broadcastingDept = '';
+        let sseEventSource = null;
+        let smtpConfigured = false;
+        let senderEmailVal = '';
+
+        // Logs cache to persist logs when switching departments
+        const logsCache = {
+            'ai23': [],
+            'cse23': [],
+            'it23': [],
+            'ece23': [],
+            'ee23': []
+        };
+
+        // Progress cache to persist percentage and visibility
+        const progressCache = {
+            'ai23': { percent: 0, show: false },
+            'cse23': { percent: 0, show: false },
+            'it23': { percent: 0, show: false },
+            'ece23': { percent: 0, show: false },
+            'ee23': { percent: 0, show: false }
+        };
+
+        // DOM elements
+        const topTitle = document.getElementById('top-title');
+        const topSubtitle = document.getElementById('top-subtitle');
+        const nameInput = document.getElementById('name-input');
+        const addNameBtn = document.getElementById('add-name-btn');
+        const namesList = document.getElementById('names-list');
+        const namesCount = document.getElementById('names-count');
+        const namesEmptyState = document.getElementById('names-empty-state');
+        const subjectInput = document.getElementById('subject-input');
+        const bodyInput = document.getElementById('body-input');
+        const saveTemplateBtn = document.getElementById('save-template-btn');
+        const sendBtn = document.getElementById('send-btn');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const terminalBody = document.getElementById('terminal-body');
+        const clearLogsBtn = document.getElementById('clear-logs-btn');
+        const terminalDeptTitle = document.getElementById('terminal-dept-title');
+
+        // Warnings
+        const warningBanner = document.getElementById('broadcast-warning-banner');
+        const warningText = document.getElementById('broadcast-warning-text');
+
+        // Department display details
+        const deptMetadata = {
+            'ai23': {
+                label: 'Artificial Intelligence (AI23)',
+                subtitle: 'Manage AI department invite list and mail generator',
+                prefix: 'ai23'
+            },
+            'cse23': {
+                label: 'Computer Science & Engineering (CSE23)',
+                subtitle: 'Manage CSE 2023 batch invite list and mail generator',
+                prefix: 'cse23'
+            },
+            'it23': {
+                label: 'Information Technology (IT23)',
+                subtitle: 'Manage IT 2023 batch invite list and mail generator',
+                prefix: 'it23'
+            },
+            'ece23': {
+                label: 'Electronics & Communication (ECE23)',
+                subtitle: 'Manage ECE 2023 batch invite list and mail generator',
+                prefix: 'ece23'
+            },
+            'ee23': {
+                label: 'Electrical Engineering (EE23)',
+                subtitle: 'Manage EE 2023 batch invite list and mail generator',
+                prefix: 'ee23'
+            }
+        };
+
+        // Utility helper to fetch current timestamp
+        function getCurrentTime() {
+            const now = new Date();
+            return `[${now.toTimeString().split(' ')[0]}]`;
+        }
+
+        // Initialize Lucide Icons
+        function refreshIcons() {
+            lucide.createIcons();
+        }
+
+        // Check SMTP Status
+        async function fetchSystemStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                
+                // Update stats
+                for (const dept in data.stats) {
+                    const el = document.getElementById(`stat-${dept}`);
+                    if (el) {
+                        el.innerHTML = `${data.stats[dept]} <span class="stat-card-unit">Recipient${data.stats[dept] !== 1 ? 's' : ''}</span>`;
+                    }
+                }
+
+                // Update SMTP widget
+                smtpConfigured = data.smtp_configured;
+                senderEmailVal = data.sender_email;
+                const dot = document.getElementById('smtp-status-dot');
+                const label = document.getElementById('smtp-status-text');
+                
+                if (smtpConfigured) {
+                    dot.className = 'status-dot connected';
+                    label.textContent = 'SMTP Ready';
+                    document.getElementById('preview-sender').textContent = senderEmailVal;
+                    document.getElementById('settings-email').textContent = senderEmailVal;
+                } else {
+                    dot.className = 'status-dot pending';
+                    label.textContent = 'Credentials Missing';
+                    document.getElementById('preview-sender').textContent = 'stcet-mailer@stcet.ac.in';
+                    document.getElementById('settings-email').textContent = 'Not configured (.env is empty)';
+                }
+            } catch (err) {
+                console.error("Failed to load statistics/SMTP status:", err);
+            }
+        }
+
+        // SPA Navigation logic
+        function switchPage(pageId, deptCode = null) {
+            currentPage = pageId;
+
+            // Remove active status from all sidebar options
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Hide all views
+            document.querySelectorAll('.view-container').forEach(view => {
+                view.classList.remove('active');
+            });
+
+            if (pageId === 'dashboard') {
+                document.getElementById('nav-dashboard').classList.add('active');
+                document.getElementById('dashboard-view').classList.add('active');
+                topTitle.textContent = 'Dashboard Overview';
+                topSubtitle.textContent = 'Quick statistics and status checker across STCET departments';
+                fetchSystemStats();
+            } 
+            else if (pageId === 'department' && deptCode) {
+                selectedDept = deptCode;
+                document.getElementById(`nav-dept-${deptCode}`).classList.add('active');
+                document.getElementById('department-view').classList.add('active');
+                
+                const meta = deptMetadata[deptCode];
+                topTitle.textContent = meta.label;
+                topSubtitle.textContent = meta.subtitle;
+                terminalDeptTitle.textContent = `LOGS - BROADCAST CONSOLE (${deptCode.toUpperCase()})`;
+
+                document.getElementById('tooltip-email-format').innerHTML = `Emails will format as: <strong>${meta.prefix}.{firstname.lastname}@stcet.ac.in</strong>`;
+                
+                // Clear any dynamic inputs
+                nameInput.value = '';
+
+                // Load cached logs & progress visibility
+                loadLogsFromCache(deptCode);
+                updateProgressUI(deptCode);
+
+                // Fetch department-specific data
+                fetchDeptData(deptCode);
+            } 
+            else if (pageId === 'settings') {
+                document.getElementById('nav-settings').classList.add('active');
+                document.getElementById('settings-view').classList.add('active');
+                topTitle.textContent = 'System Settings';
+                topSubtitle.textContent = 'Inspect your local environment configurations & check SMTP health';
+                fetchSystemStats();
+            }
+            else if (pageId === 'custom-mail') {
+                document.getElementById('nav-custom-mail').classList.add('active');
+                document.getElementById('custom-mail-view').classList.add('active');
+                topTitle.textContent = 'Send Custom Email';
+                topSubtitle.textContent = 'Compose and send an email to any custom address instantly';
+                fetchSystemStats();
+                updateCustomPreview();
+            }
+
+            refreshIcons();
+        }
+
+        // Retrieve template and name list for selected department
+        async function fetchDeptData(dept) {
+            try {
+                // Get name list
+                const namesRes = await fetch(`/api/names/${dept}`);
+                const namesData = await namesRes.json();
+                renderNames(namesData.names || []);
+
+                // Get template draft
+                const templateRes = await fetch(`/api/template/${dept}`);
+                const templateData = await templateRes.json();
+                subjectInput.value = templateData.subject || '';
+                bodyInput.value = templateData.body || '';
+
+                // Setup layout elements depending on active broadcast states
+                enforceBroadcastUIState();
+                
+                // Refresh preview
+                updateLivePreview();
+            } catch (err) {
+                console.error("Error fetching department data:", err);
+            }
+        }
+
+        // Render Names inside container
+        function renderNames(recipients) {
+            namesList.innerHTML = '';
+            namesCount.textContent = `${recipients.length} Recipient${recipients.length !== 1 ? 's' : ''}`;
+
+            if (recipients.length === 0) {
+                namesEmptyState.style.display = 'flex';
+                sendBtn.disabled = true;
+                return;
+            }
+
+            namesEmptyState.style.display = 'none';
+            // Enable send button if we are not broadcasting elsewhere
+            if (!isBroadcasting) {
+                sendBtn.disabled = false;
+            }
+
+            recipients.forEach(rec => {
+                const prefix = deptMetadata[selectedDept].prefix;
+                const emailAddress = rec.email || `${prefix}.${rec.name.toLowerCase().replaceAll(' ', '.')}@stcet.ac.in`;
+
+                const li = document.createElement('li');
+                li.className = 'name-item';
+                li.innerHTML = `
+                    <div class="name-info">
+                        <span class="name-text">${escapeHtml(rec.name)}</span>
+                        <span class="name-email">${escapeHtml(emailAddress)}</span>
+                    </div>
+                    <button class="btn-danger-icon delete-name-btn" data-name="${escapeHtml(rec.name)}">
+                        <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                    </button>
+                `;
+                namesList.appendChild(li);
+            });
+
+            // Re-render trash icon
+            refreshIcons();
+
+            // Bind click callbacks to delete buttons
+            document.querySelectorAll('.delete-name-btn').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const name = e.currentTarget.getAttribute('data-name');
+                    await deleteRecipient(name);
+                };
+            });
+        }
+
+        // UI Enforcement during broadcast runs
+        function enforceBroadcastUIState() {
+            if (isBroadcasting) {
+                if (selectedDept === broadcastingDept) {
+                    // Current department is broadcasting - lock it down
+                    warningBanner.style.display = 'none';
+                    
+                    sendBtn.disabled = true;
+                    sendBtn.innerHTML = `<i data-lucide="loader" class="pulse-badge" style="animation: spin 1s infinite linear;"></i><span>Sending Broadcast...</span>`;
+                    
+                    nameInput.disabled = true;
+                    addNameBtn.disabled = true;
+                    subjectInput.disabled = true;
+                    bodyInput.disabled = true;
+                    saveTemplateBtn.disabled = true;
+                    
+                    document.querySelectorAll('.delete-name-btn').forEach(btn => {
+                        btn.disabled = true;
+                    });
+                } else {
+                    // Another department is broadcasting - warning banner & block broadcast start
+                    warningBanner.style.display = 'flex';
+                    warningText.textContent = `A broadcast is currently running for department ${broadcastingDept.toUpperCase()}. Please wait for it to finish.`;
+                    
+                    sendBtn.disabled = true;
+                    sendBtn.innerHTML = `<i data-lucide="play"></i><span>Start Email Broadcast</span>`;
+
+                    nameInput.disabled = false;
+                    addNameBtn.disabled = false;
+                    subjectInput.disabled = false;
+                    bodyInput.disabled = false;
+                    saveTemplateBtn.disabled = false;
+                }
+            } else {
+                // Free layout
+                warningBanner.style.display = 'none';
+                
+                sendBtn.disabled = (document.querySelectorAll('.name-item').length === 0);
+                sendBtn.innerHTML = `<i data-lucide="play"></i><span>Start Email Broadcast</span>`;
+                
+                nameInput.disabled = false;
+                addNameBtn.disabled = false;
+                subjectInput.disabled = false;
+                bodyInput.disabled = false;
+                saveTemplateBtn.disabled = false;
+            }
+            refreshIcons();
+        }
+
+        // Live Email Preview Renderer
+        function updateLivePreview() {
+            const subject = subjectInput.value.trim();
+            const body = bodyInput.value;
+
+            // Recipient display fallback
+            let mockRecipientName = 'Adilnawaz Alam';
+            const firstRecipientEl = namesList.querySelector('.name-text');
+            if (firstRecipientEl) {
+                mockRecipientName = firstRecipientEl.textContent;
+            }
+            
+            const prefix = deptMetadata[selectedDept].prefix;
+            const mockEmail = `${prefix}.${mockRecipientName.toLowerCase().replaceAll(' ', '.')}@stcet.ac.in`;
+
+            document.getElementById('preview-recipient').textContent = mockEmail;
+            
+            if (subject) {
+                document.getElementById('preview-subject').textContent = subject;
+            } else {
+                document.getElementById('preview-subject').textContent = '(No Subject)';
+            }
+
+            if (body) {
+                // Simulate personalized replacements
+                let parsedBody = '';
+                try {
+                    parsedBody = body.replaceAll('{name}', mockRecipientName);
+                } catch(e) {
+                    parsedBody = body;
+                }
+                document.getElementById('preview-body').textContent = parsedBody;
+            } else {
+                document.getElementById('preview-body').textContent = '(Empty Body)';
+            }
+        }
+
+        // Confirm & Feed modal operations
+        function openConfirmModal() {
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            // Generate recipient email address
+            const prefix = deptMetadata[selectedDept].prefix;
+            const emailAddress = `${prefix}.${name.toLowerCase().replaceAll(' ', '.')}@stcet.ac.in`;
+
+            // Prepare template subject and body
+            const subject = subjectInput.value.trim();
+            const body = bodyInput.value;
+
+            // Format body with recipient name
+            let parsedBody = '';
+            if (body) {
+                try {
+                    parsedBody = body.replaceAll('{name}', name);
+                } catch(e) {
+                    parsedBody = body;
+                }
+            }
+
+            // Populate modal inputs
+            document.getElementById('modal-rec-name').value = name;
+            document.getElementById('modal-rec-email').value = emailAddress;
+            document.getElementById('modal-rec-subject').placeholder = subject || '(No Template Subject)';
+            document.getElementById('modal-rec-subject').value = '';
+            document.getElementById('modal-rec-body').placeholder = parsedBody || '(No Template Body)';
+            document.getElementById('modal-rec-body').value = '';
+
+            // Show modal
+            document.getElementById('email-confirm-modal').style.display = 'flex';
+            
+            // Draw preview
+            updateModalPreview();
+            refreshIcons();
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('email-confirm-modal').style.display = 'none';
+        }
+
+        function updateModalPreview() {
+            const name = document.getElementById('modal-rec-name').value.trim();
+            const email = document.getElementById('modal-rec-email').value.trim();
+            const customSubject = document.getElementById('modal-rec-subject').value.trim();
+            const customBody = document.getElementById('modal-rec-body').value.trim();
+
+            const prefix = deptMetadata[selectedDept].prefix;
+            const fallbackEmail = name ? `${prefix}.${name.toLowerCase().replaceAll(' ', '.')}@stcet.ac.in` : '';
+            
+            document.getElementById('modal-preview-to').textContent = email || fallbackEmail || 'recipient@stcet.ac.in';
+
+            const defaultSubject = subjectInput.value.trim() || '(No Subject)';
+            document.getElementById('modal-preview-subject').textContent = customSubject || defaultSubject;
+
+            const defaultBody = bodyInput.value || '(Empty Body)';
+            let finalBody = customBody || defaultBody;
+            if (!customBody && name) {
+                try {
+                    finalBody = defaultBody.replaceAll('{name}', name);
+                } catch(e) {
+                    finalBody = defaultBody;
+                }
+            }
+            document.getElementById('modal-preview-body').textContent = finalBody;
+        }
+
+        async function feedMail() {
+            const name = document.getElementById('modal-rec-name').value.trim();
+            const email = document.getElementById('modal-rec-email').value.trim();
+            const subject = document.getElementById('modal-rec-subject').value.trim();
+            const body = document.getElementById('modal-rec-body').value.trim();
+
+            if (!name) {
+                alert("Name is required");
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/names/${selectedDept}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, subject, body })
+                });
+                const data = await response.json();
+                if (data.error) {
+                    logMessage(selectedDept, 'warning', data.error);
+                    alert(data.error);
+                } else {
+                    renderNames(data.names);
+                    nameInput.value = '';
+                    closeConfirmModal();
+                    logMessage(selectedDept, 'success', `Added recipient: ${name}`);
+                    updateLivePreview();
+                }
+            } catch (err) {
+                logMessage(selectedDept, 'error', 'Server error. Failed to add recipient.');
+                alert('Server error. Failed to add recipient.');
+            }
+        }
+
+        // Delete recipient trigger
+        async function deleteRecipient(name) {
+            try {
+                const response = await fetch(`/api/names/${selectedDept}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const data = await response.json();
+                if (data.error) {
+                    logMessage(selectedDept, 'warning', data.error);
+                } else {
+                    renderNames(data.names);
+                    logMessage(selectedDept, 'info', `Removed recipient: ${name}`);
+                    updateLivePreview();
+                }
+            } catch (err) {
+                logMessage(selectedDept, 'error', 'Server error. Failed to delete recipient.');
+            }
+        }
+
+        // Custom email operations
+        function updateCustomPreview() {
+            const email = customRecEmail.value.trim();
+            const name = customRecName.value.trim();
+            const subject = customSubject.value.trim();
+            const body = customBody.value;
+
+            document.getElementById('custom-preview-sender').textContent = senderEmailVal || 'stcet-mailer@stcet.ac.in';
+            document.getElementById('custom-preview-recipient').textContent = email || 'recipient@example.com';
+            document.getElementById('custom-preview-subject').textContent = subject || '(No Subject)';
+
+            if (body) {
+                let parsedBody = body;
+                if (name) {
+                    try {
+                        parsedBody = body.replaceAll('{name}', name);
+                    } catch(e) {
+                        parsedBody = body;
+                    }
+                }
+                document.getElementById('custom-preview-body').textContent = parsedBody;
+            } else {
+                document.getElementById('custom-preview-body').textContent = '(Empty Body)';
+            }
+        }
+
+        async function sendCustomEmail() {
+            const email = customRecEmail.value.trim();
+            const name = customRecName.value.trim();
+            const subject = customSubject.value.trim();
+            const body = customBody.value;
+            const attachImage = customAttachImg.checked;
+
+            if (!email) {
+                alert("Recipient email address is required.");
+                return;
+            }
+            if (!subject) {
+                alert("Email subject is required.");
+                return;
+            }
+            if (!body) {
+                alert("Email body is required.");
+                return;
+            }
+
+            customSendBtn.disabled = true;
+            customSendBtn.innerHTML = `<i data-lucide="loader" class="pulse-badge" style="animation: spin 1s infinite linear;"></i><span>Sending Email...</span>`;
+            refreshIcons();
+
+            function logCustom(type, text) {
+                const time = getCurrentTime();
+                const line = document.createElement('div');
+                line.className = `console-line line-${type}`;
+                line.innerHTML = `
+                    <span class="line-timestamp">${time}</span>
+                    <span class="line-text">${escapeHtml(text)}</span>
+                `;
+                customTerminalBody.appendChild(line);
+                customTerminalBody.scrollTop = customTerminalBody.scrollHeight;
+            }
+
+            logCustom('info', `Initializing custom email dispatch to: ${email}...`);
+            logCustom('info', `Connecting to SMTP server (smtp.gmail.com:587)...`);
+
+            try {
+                const response = await fetch('/api/send_custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, name, subject, body, attach_image: attachImage })
+                });
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    logCustom('success', `[SUCCESS] ${data.message}`);
+                    alert(`Email successfully sent to ${email}!`);
+                    // Clear custom inputs
+                    customRecEmail.value = '';
+                    customRecName.value = '';
+                    customSubject.value = '';
+                    customBody.value = '';
+                    updateCustomPreview();
+                } else {
+                    logCustom('danger', `[ERROR] ${data.message || 'Unknown error'}`);
+                    alert(`Failed to send email: ${data.message}`);
+                }
+            } catch (err) {
+                logCustom('danger', `[ERROR] Network error: ${err.message}`);
+                alert(`Network error: ${err.message}`);
+            } finally {
+                customSendBtn.disabled = false;
+                customSendBtn.innerHTML = `<i data-lucide="send"></i><span>Send Custom Email</span>`;
+                refreshIcons();
+            }
+        }
+
+        // Save Template trigger
+        async function saveTemplate() {
+            const subject = subjectInput.value.trim();
+            const body = bodyInput.value;
+
+            if (!subject) {
+                logMessage(selectedDept, 'warning', 'Subject is required to save template.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/template/${selectedDept}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject, body })
+                });
+                const data = await response.json();
+                if (data.error) {
+                    logMessage(selectedDept, 'error', data.error);
+                } else {
+                    logMessage(selectedDept, 'success', 'Template saved successfully.');
+                }
+            } catch (err) {
+                logMessage(selectedDept, 'error', 'Server error. Failed to save template.');
+            }
+        }
+
+        // Log Caching and DOM Rendering Helpers
+        function logMessage(dept, type, text) {
+            const time = getCurrentTime();
+            const logItem = { type, text, time };
+            
+            logsCache[dept].push(logItem);
+
+            // Cap logs at 100 entries per department to keep memory clean
+            if (logsCache[dept].length > 100) {
+                logsCache[dept].shift();
+            }
+
+            if (selectedDept === dept && currentPage === 'department') {
+                appendLogToDOM(logItem);
+            }
+        }
+
+        function appendLogToDOM(log) {
+            const line = document.createElement('div');
+            line.className = `console-line line-${log.type}`;
+            line.innerHTML = `
+                <span class="line-timestamp">${log.time}</span>
+                <span class="line-text">${escapeHtml(log.text)}</span>
+            `;
+            terminalBody.appendChild(line);
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
+
+        function loadLogsFromCache(dept) {
+            terminalBody.innerHTML = '';
+            const list = logsCache[dept] || [];
+            if (list.length === 0) {
+                terminalBody.innerHTML = `
+                    <div class="console-line line-info">
+                        <span class="line-timestamp">${getCurrentTime()}</span>
+                        <span class="line-text">Console initialized. Ready.</span>
+                    </div>
+                `;
+            } else {
+                list.forEach(item => appendLogToDOM(item));
+            }
+        }
+
+        function updateProgressUI(dept) {
+            const pState = progressCache[dept];
+            if (pState && pState.show) {
+                progressContainer.style.display = 'block';
+                progressBar.style.width = `${pState.percent}%`;
+            } else {
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+            }
+        }
+
+        // Send Email Broadcast (SSE)
+        async function startBroadcast() {
+            const subject = subjectInput.value.trim();
+            const body = bodyInput.value;
+
+            if (!subject) {
+                logMessage(selectedDept, 'warning', 'Email Subject is required before starting broadcast.');
+                return;
+            }
+
+            // Lock application broadcast state
+            isBroadcasting = true;
+            broadcastingDept = selectedDept;
+            document.getElementById(`badge-${selectedDept}`).style.display = 'block'; // pulsing icon next to dept name in sidebar
+
+            progressCache[selectedDept].percent = 0;
+            progressCache[selectedDept].show = true;
+            updateProgressUI(selectedDept);
+            
+            enforceBroadcastUIState();
+            logMessage(selectedDept, 'info', `Preparing broadcast payload...`);
+
+            try {
+                // First save template draft
+                await fetch(`/api/template/${selectedDept}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject, body })
+                });
+
+                // Establish event stream endpoint
+                const response = await fetch(`/api/send/${selectedDept}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject, body })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Connection failed. Server refused to process request.');
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                let processedCount = 0;
+                const totalMails = document.querySelectorAll('.name-item').length;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n\n');
+                    buffer = lines.pop(); // Keep partial chunks in buffer
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const rawData = line.substring(6);
+                            try {
+                                const event = JSON.parse(rawData);
+
+                                if (event.type === 'success' || event.type === 'fail') {
+                                    processedCount++;
+                                    const percent = Math.min((processedCount / totalMails) * 100, 100);
+                                    progressCache[broadcastingDept].percent = percent;
+                                    
+                                    // Update UI real-time if viewing current department
+                                    if (selectedDept === broadcastingDept) {
+                                        progressBar.style.width = `${percent}%`;
+                                    }
+                                }
+
+                                if (event.type === 'success') {
+                                    logMessage(broadcastingDept, 'success', event.message);
+                                } else if (event.type === 'fail' || event.type === 'error') {
+                                    logMessage(broadcastingDept, 'danger', event.message);
+                                } else if (event.type === 'warning') {
+                                    logMessage(broadcastingDept, 'warning', event.message);
+                                } else {
+                                    logMessage(broadcastingDept, 'info', event.message);
+                                }
+
+                                if (event.type === 'done' || event.type === 'error') {
+                                    terminateBroadcastState();
+                                }
+                            } catch (e) {
+                                console.error('SSE JSON parsing error:', e);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                logMessage(broadcastingDept, 'error', `Broadcast Interrupted: ${err.message}`);
+                terminateBroadcastState();
+            }
+        }
+
+        function terminateBroadcastState() {
+            const tempDept = broadcastingDept;
+            isBroadcasting = false;
+            broadcastingDept = '';
+
+            const badge = document.getElementById(`badge-${tempDept}`);
+            if (badge) badge.style.display = 'none';
+
+            // Reset UI lockups
+            enforceBroadcastUIState();
+
+            // Auto-hide progress bar after delay
+            setTimeout(() => {
+                // If a new broadcast hasn't started, hide it
+                if (!isBroadcasting && selectedDept === tempDept) {
+                    progressCache[tempDept].show = false;
+                    updateProgressUI(tempDept);
+                }
+            }, 5000);
+        }
+
+        // Test SMTP connection diagnostic
+        async function testSmtpConnection() {
+            const btn = document.getElementById('test-smtp-btn');
+            const output = document.getElementById('diagnostic-output');
+            
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader" class="pulse-badge" style="animation: spin 1s infinite linear;"></i><span>Testing Connection...</span>`;
+            refreshIcons();
+            
+            output.textContent = `${getCurrentTime()} [DIAGNOSTIC] Initializing SMTP connection diagnostics...\n` +
+                                 `${getCurrentTime()} [DIAGNOSTIC] Testing connection parameters (smtp.gmail.com:587)...\n`;
+            
+            try {
+                const response = await fetch('/api/test_smtp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    output.textContent += `${getCurrentTime()} [SUCCESS] ${data.message}\n` +
+                                          `${getCurrentTime()} [SUCCESS] SMTP credentials loaded successfully and tested ok.`;
+                    output.style.borderColor = 'var(--success)';
+                } else {
+                    output.textContent += `${getCurrentTime()} [FAILED] SMTP handshake failed.\n` +
+                                          `${getCurrentTime()} [FAILED] Error returned: ${data.message}`;
+                    output.style.borderColor = 'var(--danger)';
+                }
+            } catch (err) {
+                output.textContent += `${getCurrentTime()} [ERROR] Unable to contact API server: ${err.message}`;
+                output.style.borderColor = 'var(--danger)';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="refresh-cw" style="width: 15px; height: 15px;"></i><span>Run SMTP Diagnostic</span>`;
+                refreshIcons();
+                fetchSystemStats();
+            }
+        }
+
+        // HTML Escape Helper
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+        }
+
+        // Bind event listeners
+        addNameBtn.onclick = openConfirmModal;
+        nameInput.onkeydown = (e) => {
+            if (e.key === 'Enter') openConfirmModal();
+        };
+        saveTemplateBtn.onclick = saveTemplate;
+        sendBtn.onclick = startBroadcast;
+        
+        subjectInput.oninput = updateLivePreview;
+        bodyInput.oninput = updateLivePreview;
+
+        clearLogsBtn.onclick = () => {
+            logsCache[selectedDept] = [];
+            loadLogsFromCache(selectedDept);
+        };
+
+        // Custom email element declaration & bindings
+        const customRecEmail = document.getElementById('custom-rec-email');
+        const customRecName = document.getElementById('custom-rec-name');
+        const customSubject = document.getElementById('custom-subject');
+        const customBody = document.getElementById('custom-body');
+        const customAttachImg = document.getElementById('custom-attach-img');
+        const customSendBtn = document.getElementById('custom-send-btn');
+        const customTerminalBody = document.getElementById('custom-terminal-body');
+        const clearCustomLogsBtn = document.getElementById('clear-custom-logs-btn');
+
+        customRecEmail.oninput = updateCustomPreview;
+        customRecName.oninput = updateCustomPreview;
+        customSubject.oninput = updateCustomPreview;
+        customBody.oninput = updateCustomPreview;
+
+        clearCustomLogsBtn.onclick = () => {
+            customTerminalBody.innerHTML = `
+                <div class="console-line line-info">
+                    <span class="line-timestamp">${getCurrentTime()}</span>
+                    <span class="line-text">Console cleared.</span>
+                </div>
+            `;
+        };
+
+        // Modal inputs events
+        document.getElementById('modal-rec-name').oninput = updateModalPreview;
+        document.getElementById('modal-rec-email').oninput = updateModalPreview;
+        document.getElementById('modal-rec-subject').oninput = updateModalPreview;
+        document.getElementById('modal-rec-body').oninput = updateModalPreview;
+
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+
+        // Check local storage or preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            themeIcon.setAttribute('data-lucide', 'moon');
+        } else {
+            document.body.classList.remove('light-mode');
+            themeIcon.setAttribute('data-lucide', 'sun');
+        }
+
+        themeToggle.onclick = () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            
+            if (isLight) {
+                localStorage.setItem('theme', 'light');
+                themeIcon.setAttribute('data-lucide', 'moon');
+            } else {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.setAttribute('data-lucide', 'sun');
+            }
+            
+            // Refresh icons since the data-lucide attribute changed
+            refreshIcons();
+        };
+
+        // Initialize App
+        refreshIcons();
+        switchPage('dashboard');
+    </script>
+</body>
+
+</html>
